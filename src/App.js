@@ -1,18 +1,36 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import './App.css';
 import axios from 'axios';
+import { Header } from './Layout/header/header';
+import Footer from './Layout/footer/footer';
 
 const URL = 'http://localhost:3200/api';
-const imageURL = 'http://localhost:3200/uploads/user-avatar/'
-const token = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhdmF0YXIiOiJkZWZhdWx0LnBuZyIsImFjdGl2ZSI6dHJ1ZSwiX2lkIjoiNjE1Y2RhNmQyYWFhMDg4NTliMTlmMzc5IiwiZW1haWwiOiJlbXBsb3llZUBzcnYuY29tIiwibmFtZSI6IkVtcGxveWVlIiwic3VybmFtZSI6IkJhY2tlbmQiLCJkaXIiOiJJcmVuZSBDdXJpZSIsImRpcl9udW0iOjEyMzQsInJvbGUiOiJVU0VSX1JPTEUiLCJfX3YiOjAsImlhdCI6MTYzNDA4Mzc2NywiZXhwIjoxNjM0MDg3MzY3fQ.py1OzVfXLVbsQ2uZ5tFCAcvJ9mTmoAQe7BFjjSJ2CeKi_zmSimFwfC0wDnSTWJofZwPXZD-DvFqApAMDrrM-hg"
+
+const imageURL = 'http://localhost:3200/uploads/user-avatar/';
+
+let token = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhdmF0YXIiOiJkZWZhdWx0LnBuZyIsImFjdGl2ZSI6dHJ1ZSwiX2lkIjoiNjE1Y2RhNmQyYWFhMDg4NTliMTlmMzc5IiwiZW1haWwiOiJlbXBsb3llZUBzcnYuY29tIiwibmFtZSI6IkVtcGxveWVlIiwic3VybmFtZSI6IkJhY2tlbmQiLCJkaXIiOiJJcmVuZSBDdXJpZSIsImRpcl9udW0iOjEyMzQsInJvbGUiOiJVU0VSX1JPTEUiLCJfX3YiOjAsImlhdCI6MTYzNDI1NjU4NywiZXhwIjoxNjM0MjYwMTg3fQ.eXkSowrGe1reWJzcz-UElrxvwEzAzHQQBoZtV4MxwKrwi__fDB_FwA1cERZnXF_UXkc2VPPSYADeR9tpXeLEiw";
 
 function App() {
   const [allUsers, setAllUsers] = useState([]);
 
-  const [user, setUser] = useState({})
-	
-  const handleGetUsers = () =>{
-    axios.get(`${URL}/users`, {})
+  const [user, setUser] = useState({});
+
+	const login = () => {
+      console.log("Login llamado");	
+      return axios.post(`${URL}/login`, { email: 'employee@srv.com', password: '1234'})
+        .then(response => {
+          return response.data.token;
+        }).catch(error => {
+          return error
+        })
+  }
+
+  const handleGetUsers = (token) =>{
+    axios.get(`${URL}/users`, {
+      headers: {
+        Authorization: token
+      }
+    })
       .then(response => {
         console.log(response.data);
         setAllUsers(response.data.users)
@@ -26,8 +44,6 @@ function App() {
   // Buscar información personal de un usuario
   const handleGetUserData = async (id) =>{
     try {
-
-
       console.log(id);
       const userDB = await axios.get(`${URL}/user/${id}`, {
         headers: {
@@ -44,11 +60,18 @@ function App() {
 
 
   useEffect(() => {
-    handleGetUsers()
+    async function loginAndGetData() {
+      token = await login();
+      console.log('Token recibido:', token);
+      handleGetUsers(token)
+    }
+    loginAndGetData();
   }, [])
 
   return (
     <>
+      <Header></Header>
+      
       <div className="flex">
         <div>
         <h1>Account Balance</h1>
@@ -79,7 +102,7 @@ function App() {
           </ul>
         </div>
       </div>
-      
+      <Footer></Footer>
     </>
   );
 }
