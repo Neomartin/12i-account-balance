@@ -1,45 +1,28 @@
-import React, { useState, useEffect, Fragment } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import './App.css';
 import axios from 'axios';
 import { Header } from './Layout/header/header';
 import Footer from './Layout/footer/footer';
-
-const URL = 'http://localhost:3200/api';
-
-const imageURL = 'http://localhost:3200/uploads/user-avatar/';
-
-let token = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhdmF0YXIiOiJkZWZhdWx0LnBuZyIsImFjdGl2ZSI6dHJ1ZSwiX2lkIjoiNjE1Y2RhNmQyYWFhMDg4NTliMTlmMzc5IiwiZW1haWwiOiJlbXBsb3llZUBzcnYuY29tIiwibmFtZSI6IkVtcGxveWVlIiwic3VybmFtZSI6IkJhY2tlbmQiLCJkaXIiOiJJcmVuZSBDdXJpZSIsImRpcl9udW0iOjEyMzQsInJvbGUiOiJVU0VSX1JPTEUiLCJfX3YiOjAsImlhdCI6MTYzNDI1NjU4NywiZXhwIjoxNjM0MjYwMTg3fQ.eXkSowrGe1reWJzcz-UElrxvwEzAzHQQBoZtV4MxwKrwi__fDB_FwA1cERZnXF_UXkc2VPPSYADeR9tpXeLEiw";
+import Home from './pages/home/home'
+import Login from './pages/login/login';
+import Users from './pages/users/users';
+import Contact from './pages/contact/contact';
+import { URL } from './config/api';
 
 function App() {
-  const [allUsers, setAllUsers] = useState([]);
-
+  
+  const [token, setToken] = useState(null)
   const [user, setUser] = useState({});
 
 	const login = () => {
-      console.log("Login llamado");	
-      return axios.post(`${URL}/login`, { email: 'employee@srv.com', password: '1234'})
-        .then(response => {
-          return response.data.token;
-        }).catch(error => {
-          return error
-        })
-  }
-
-  const handleGetUsers = (token) =>{
-    axios.get(`${URL}/users`, {
-      headers: {
-        Authorization: token
-      }
-    })
-      .then(response => {
-        console.log(response.data);
-        setAllUsers(response.data.users)
-      })
-      .catch(error => {
-        console.log(error)
+    return axios.post(`${URL}/login`, { email: 'employee@srv.com', password: '1234'})
+      .then((response) => {
+        return response.data;
       })
   }
 
+  
 
   // Buscar información personal de un usuario
   const handleGetUserData = async (id) =>{
@@ -60,39 +43,50 @@ function App() {
 
 
   useEffect(() => {
-    async function loginAndGetData() {
-      token = await login();
-      console.log('Token recibido:', token);
-      handleGetUsers(token)
+    console.log('Llamado al useEffect')
+    if(!token) {
+      async function loginToken() {
+        let loginResponse = await login();
+        console.log(loginResponse)
+        setToken(loginResponse.token);
+        setUser(loginResponse.user)
+      }
+      loginToken();
     }
-    loginAndGetData();
-  }, [])
+    
+    // handleGetUsers(token)
+    // async function loginAndGetData() {
+    //   // token = await login();
+    //   console.log('Token recibido:', token);
+    //   handleGetUsers(token)
+    // }
+    
+  }, [token])
 
   return (
-    <>
-      <Header></Header>
-      
-      <div className="flex">
-        <div>
+    <Router>
+      <Header user={user}></Header>
+      <main className="main-container"> 
         <h1>Account Balance</h1>
-      {
-        allUsers.map(user => {
-          return (
-            <Fragment key={user._id}>
-             <div >
-              <img src={imageURL + user.avatar} alt=""/>
-              <h2>
-                {user.name}, {user.surname}
-              </h2> 
-              <span className="user-email">
-                {user.email}
-              </span>
-              <a href="#" onClick={() => handleGetUserData(user._id)}> Ver más </a>
-             </div>
-            </Fragment>
-          )
-        })
-      }
+        
+
+        <Switch>
+          <Route path="/" exact component={Home}></Route>
+          <Route path="/login" component={Login}></Route>
+          <Route path="/users">
+            <Users token={token} />
+          </Route>
+          <Route path="/contact">
+            <Contact />
+          </Route>
+          
+        </Switch>
+      </main>
+      
+      {/* <div className="flex">
+        <div>
+        
+      
         </div>
         <div>
           <h1>User Info</h1>
@@ -101,9 +95,9 @@ function App() {
             <li>{user.email}</li>
           </ul>
         </div>
-      </div>
+      </div> */}
       <Footer></Footer>
-    </>
+    </Router>
   );
 }
 
